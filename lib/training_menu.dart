@@ -1,7 +1,10 @@
+import 'dart:io';
+
 import 'package:circular_countdown_timer/circular_countdown_timer.dart';
 import 'package:countdown_timer/provider.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'image_controller.dart';
 
 import 'main.dart';
 
@@ -20,6 +23,7 @@ class _TrainingState extends ConsumerState<Training> {
   final int _duration = 10;
   final CountDownController _controller = CountDownController();
 
+  final Future<String> path = ImageFileController.localPath;
 
   @override
   void initState(){
@@ -34,7 +38,16 @@ class _TrainingState extends ConsumerState<Training> {
         title: Text(widget.trainingSet.title),
       ),
       body: Column(
-        children: [
+        children:[
+          FutureBuilder(
+              future: path,
+              builder: (context, snapshot) {
+                return Image.file(
+                  File('${snapshot.data}/${widget.trainingSet.trainingMenu[widget.index].imagePath}.jpeg'),
+                  height: 100,
+                  width: 100,
+                );
+          }),
           Text(widget.trainingSet.trainingMenu[widget.index].trainingName.toString()),
           Center(
               child: CircularCountDownTimer(

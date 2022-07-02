@@ -12,7 +12,10 @@ import 'package:countdown_timer/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import 'dart:async';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'functions.dart';
+import 'image_controller.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'dart:typed_data';
+import 'package:path/path.dart';
 
 class EditPage extends ConsumerStatefulWidget {
   const EditPage({Key? key, required this.trainingSetName, }) : super(key: key);
@@ -44,7 +47,7 @@ class EditPageState extends ConsumerState<EditPage> {
           children: <Widget>[
             trainingMenu.isEmpty ? ElevatedButton(
                 onPressed: () {
-                  _MakeTrainingMenuDialog(context, ref, widget.trainingSetName);
+                  _MakeTrainingMenuDialog(context, ref, widget.trainingSetName, trainingMenu);
                   },
                 child: Text('作成'))
                 : Column(
@@ -52,7 +55,7 @@ class EditPageState extends ConsumerState<EditPage> {
                     TrainingList(trainingMenu: trainingMenu,),
                     ElevatedButton(
                         onPressed: () {
-                          _MakeTrainingMenuDialog(context, ref, widget.trainingSetName);
+                          _MakeTrainingMenuDialog(context, ref, widget.trainingSetName, trainingMenu);
                         },
                         child: Text('作成'))
                   ],
@@ -63,7 +66,10 @@ class EditPageState extends ConsumerState<EditPage> {
       );
   }
 
-  Future _MakeTrainingMenuDialog (BuildContext context, WidgetRef ref, String trainingName) {
+  Future _MakeTrainingMenuDialog (BuildContext context, WidgetRef ref, String trainingSetName, List trainingMenu) {
+    final String imageFileIndex = trainingMenu.length.toString();
+    final String imageFilePath = 'image-$imageFileIndex';
+
     return showDialog(
         context: context,
         builder: (context) {
@@ -87,9 +93,14 @@ class EditPageState extends ConsumerState<EditPage> {
                     ),
                     ElevatedButton(
                         onPressed: () async {
-                          await _getAndSaveImageFromDevice(ImageSource.camera);
+                          await _getAndSaveImageFromDevice(ImageSource.camera, imageFilePath);
                           setState((){});
-                        }, child: Text('画像を追加')),
+                        }, child: Text('カメラ')),
+                    ElevatedButton(
+                        onPressed: () async {
+                          await _getAndSaveImageFromDevice(ImageSource.gallery, imageFilePath);
+                          setState((){});
+                        }, child: Text('ギャラリー')),
                     (imageFile == null)
                         ? Icon(Icons.no_sim)
                         : Image.memory(
@@ -107,7 +118,13 @@ class EditPageState extends ConsumerState<EditPage> {
                       child: Text('キャンセル')),
                   ElevatedButton(
                       onPressed: () async {
-                        _MakeTrainingMenu(ref, _textcontroller.text, _timecontroller.text, _descriptioncontroller.text);
+                        _MakeTrainingMenu(
+                            ref,
+                            _textcontroller.text,
+                            _timecontroller.text,
+                            _descriptioncontroller.text,
+                            imageFilePath,
+                            );
                         _textcontroller.clear();
                         _timecontroller.clear();
                         _descriptioncontroller.clear();
@@ -121,14 +138,15 @@ class EditPageState extends ConsumerState<EditPage> {
     });
   }
 
-  Future<void> _MakeTrainingMenu(WidgetRef ref, String text, String time, String description) async {
+  Future<void> _MakeTrainingMenu(WidgetRef ref, String _text, String _time, String _description, String imageFilePath) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     var trainingSet = ref.watch(trainingMenuProvider.notifier).getTrainingSet(widget.trainingSetName);
     List<TrainingMenu> trainingMenuList = trainingSet!.trainingMenu;
     TrainingMenu trainingMenu = TrainingMenu(
-        time: int.parse(time),
-        trainingName: text,
-        description: description,
+        trainingName: _text,
+        time: int.parse(_time),
+        description: _description,
+        imagePath: imageFilePath,
     );
     trainingMenuList.add(trainingMenu);
     List<String> jsonList = trainingMenuList.map((f) => jsonEncode(f)).toList();
@@ -137,12 +155,19 @@ class EditPageState extends ConsumerState<EditPage> {
     ref.watch(trainingMenuProvider.notifier).change();
   }
 
-  Future<void> _getAndSaveImageFromDevice(ImageSource source) async {
+  Future<void> _getAndSaveImageFromDevice(ImageSource source, imageFileName) async {
     PickedFile? imageFile = await ImagePicker.platform.pickImage(source: source);
     if (imageFile == null) {
       return;
     }
-    var savedFile = await ImageFileController.savaLocalImage(imageFile);
+    var savedFile = await ImageFileController.savaLocalImage(imageFile, imageFileName);
+    print(basename(savedFile.path));
+    if (source == ImageSource.camera) {
+      // ギャラリーに保存
+      Uint8List _buffer = await imageFile.readAsBytes();
+      ImageGallerySaver.saveImage(_buffer);
+    }
+
     setState((){
       this.imageFile = savedFile;
     });

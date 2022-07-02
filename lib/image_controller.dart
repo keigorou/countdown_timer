@@ -13,9 +13,9 @@ class ImageFileController {
 
   // 画像をファイルに保存する。
   // カメラ撮影時のimageファイルを引数に入れる。
-  static Future savaLocalImage(PickedFile image) async {
+  static Future savaLocalImage(PickedFile image, String imageFilePath) async {
     final path = await localPath;
-    final imagePath = '$path/img.jpeg';
+    final imagePath = '$path/$imageFilePath.jpeg';
     File imageFile = File(imagePath);
     // カメラで撮影した画像は撮影時用の一時的フォルダパスに保存されるため、
     // その画像をドキュメントへ保存し直す。
