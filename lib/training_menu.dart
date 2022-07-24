@@ -20,7 +20,7 @@ class Training extends ConsumerStatefulWidget {
 }
 
 class _TrainingState extends ConsumerState<Training> {
-  final int _duration = 10;
+  late final int _duration;
   final CountDownController _controller = CountDownController();
 
   final Future<String> path = ImageFileController.localPath;
@@ -28,27 +28,18 @@ class _TrainingState extends ConsumerState<Training> {
   @override
   void initState(){
     super.initState();
-    ref.read(trainingMenuProvider);
+    // ref.read(trainingMenuProvider);
+    _duration = widget.trainingSet.trainingMenu[widget.index].time.toInt();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.trainingSet.title),
+        title: Text(widget.trainingSet.trainingMenu[widget.index].trainingName),
       ),
       body: Column(
         children:[
-          FutureBuilder(
-              future: path,
-              builder: (context, snapshot) {
-                return Image.file(
-                  File('${snapshot.data}/${widget.trainingSet.trainingMenu[widget.index].imagePath}.jpeg'),
-                  height: 100,
-                  width: 100,
-                );
-          }),
-          Text(widget.trainingSet.trainingMenu[widget.index].trainingName.toString()),
           Center(
               child: CircularCountDownTimer(
                 // Countdown duration in Seconds.
@@ -64,7 +55,7 @@ class _TrainingState extends ConsumerState<Training> {
                 width: MediaQuery.of(context).size.width / 2,
 
                 // Height of the Countdown Widget.
-                height: MediaQuery.of(context).size.height / 2,
+                height: MediaQuery.of(context).size.height / 2.5,
 
                 // Ring Color for Countdown Widget.
                 ringColor: Colors.grey[300]!,
@@ -101,10 +92,10 @@ class _TrainingState extends ConsumerState<Training> {
                 textFormat: CountdownTextFormat.S,
 
                 // Handles Countdown Timer (true for Reverse Countdown (max to 0), false for Forward Countdown (0 to max)).
-                isReverse: false,
+                isReverse: true,
 
                 // Handles Animation Direction (true for Reverse Animation, false for Forward Animation).
-                isReverseAnimation: true,
+                isReverseAnimation: false,
 
                 // Handles visibility of the Countdown Text.
                 isTimerTextShown: true,
@@ -122,13 +113,58 @@ class _TrainingState extends ConsumerState<Training> {
                 onComplete: () {
                   // Here, do whatever you want
                   debugPrint('Countdown Ended');
-
-                  Navigator.push(context,
-                      MaterialPageRoute(builder: (context){
-                        return Training(index: widget.index + 1, trainingSet: widget.trainingSet,);
-                      }));
+                  if (widget.trainingSet.trainingMenu.length == widget.index + 1) {
+                    EndDialog(context);
+                  } else {
+                    Navigator.push(context,
+                        MaterialPageRoute(builder: (context) {
+                          return Training(index: widget.index + 1,
+                            trainingSet: widget.trainingSet,);
+                        }));
+                  }
                 },
               )),
+          Container(
+            decoration: const BoxDecoration(
+              borderRadius: BorderRadius.only(
+                topRight: Radius.circular(24),
+                topLeft: Radius.circular(24),
+              ),
+              color: Colors.green
+              ),
+            width: double.infinity,
+            height: MediaQuery.of(context).size.height / 2.5,
+            child: Column(
+              children: [
+                FutureBuilder(
+                    future: path,
+                    builder: (BuildContext context, AsyncSnapshot snapshot) {
+                       if (snapshot.hasData) {
+                        return Image.file(
+                          File('${snapshot.data}/${widget.trainingSet.trainingMenu[widget.index].imagePath}.jpeg'),
+                          width: MediaQuery.of(context).size.width * 0.8 * 0.8,
+                          height: MediaQuery.of(context).size.width * 0.6 * 0.8,
+
+                        );
+                      } else if (snapshot.hasError) {
+                         return const Icon(
+                         Icons.check_circle_outline,
+                         color: Colors.green,
+                       size: 60,
+                       );
+                       } else {
+                         return const SizedBox(
+                         width: 60,
+                         height: 60,
+                         child: CircularProgressIndicator(),
+                         );
+                      }
+                    }
+                ),
+                Text(widget.trainingSet.trainingMenu[widget.index].description)
+              ],
+            ),
+          ),
         ],
       ),
       floatingActionButton: Row(
@@ -170,4 +206,19 @@ class _TrainingState extends ConsumerState<Training> {
           onPressed: onPressed,
         ));
   }
+}
+
+Future EndDialog (BuildContext context) {
+  return showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('終了'),
+          content: ElevatedButton(
+            onPressed: () {
+              Navigator.popUntil(context, (route) => route.isFirst);
+            }, child: const Text('TOP'),
+          ),
+        );
+      });
 }

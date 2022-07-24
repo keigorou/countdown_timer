@@ -7,17 +7,7 @@ import 'package:flutter/foundation.dart';
 
 part 'provider.freezed.dart';
 part 'provider.g.dart';
-// @immutable
-// class TrainingMenu {
-//   final int? time;
-//   final String? trainingName;
-//
-//   const TrainingMenu({required this.time, required this.trainingName});
-//
-//   TrainingMenu copyWith({time, trainingName}) {
-//     return TrainingMenu(time: time ?? this.time, trainingName: trainingName ?? this.trainingName);
-//   }
-// }
+
 @freezed
 class TrainingMenu with _$TrainingMenu {
   const factory TrainingMenu({
@@ -45,21 +35,35 @@ class TrainingSet {
 class TrainingMenuNotifierProvider extends StateNotifier<List<TrainingSet>> {
   TrainingMenuNotifierProvider(List<TrainingSet> trainingSet): super(trainingSet);
 
-  void addTrainingList(TrainingSet trainingSet) {
+  void addTrainingSet(TrainingSet trainingSet) {
     state = [...state, trainingSet];
+  }
+
+  void removeTrainingSet(TrainingSet trainingSet) {
+    state.remove(trainingSet);
+    state = [...state];
+  }
+
+  bool isExistTrainingSet(String trainingSetName) {
+     for (final trainingSet in state) {
+       if (trainingSet.title == trainingSetName) {
+         return true;
+       }
+     }
+     return false;
   }
 
   void change() {
     state = [...state];
   }
 
-  TrainingSet?  getTrainingSet(String title) {
+  TrainingSet  getTrainingSet(String title) {
     for (final trainingSet in state) {
       if (trainingSet.title == title) {
         return trainingSet;
       }
     }
-    return null;
+    return state[0];
   }
 
   TrainingSet getMenu(int index) {

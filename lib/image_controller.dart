@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-
+import 'dart:math';
 
 
 class ImageFileController {
@@ -9,6 +9,38 @@ class ImageFileController {
   static Future<String> get localPath async {
   final directory = await getApplicationDocumentsDirectory();
   return directory.path;
+  }
+
+  static Future<String> makeImageFilePath() async {
+    final path = await localPath;
+    final List<FileSystemEntity> entities = await Directory(path).list().toList();
+    String? imageFileNumber;
+    List<int> imageFileNumbers = [];
+
+    for ( final entity in entities) {
+      if (entity.path.endsWith('jpeg')) {
+        // 'image-number.jpeg'のnumberを取得
+        imageFileNumber = (entity.path.split('/').last.split('.').first.split('-').last);
+        imageFileNumbers.add(int.parse(imageFileNumber));
+      }
+    }
+
+    if (imageFileNumbers.isEmpty) {
+      return 'image-1.jpeg';
+    } else {
+      return 'image-${imageFileNumbers.reduce(max) + 1}.jpeg';
+    }
+  }
+
+  static void deleteImageFile(String imageFileName) async {
+    final path = await localPath;
+    final imagePath = '$path/$imageFileName';
+    try {
+      final imageFile = File(imagePath);
+      await imageFile.delete();
+    } catch (e) {
+      return;
+    }
   }
 
   // 画像をファイルに保存する。
