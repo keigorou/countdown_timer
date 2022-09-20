@@ -11,13 +11,13 @@ class ImageFileController {
   return directory.path;
   }
 
-  static Future<String> makeImageFilePath() async {
+  static Future<String> makeImageFileName() async {
     final path = await localPath;
     final List<FileSystemEntity> entities = await Directory(path).list().toList();
     String? imageFileNumber;
     List<int> imageFileNumbers = [];
 
-    for ( final entity in entities) {
+    for (final entity in entities) {
       if (entity.path.endsWith('jpeg')) {
         // 'image-number.jpeg'のnumberを取得
         imageFileNumber = (entity.path.split('/').last.split('.').first.split('-').last);
@@ -26,15 +26,15 @@ class ImageFileController {
     }
 
     if (imageFileNumbers.isEmpty) {
-      return 'image-1.jpeg';
+      return 'image-1';
     } else {
-      return 'image-${imageFileNumbers.reduce(max) + 1}.jpeg';
+      return 'image-${imageFileNumbers.reduce(max) + 1}';
     }
   }
 
   static void deleteImageFile(String imageFileName) async {
     final path = await localPath;
-    final imagePath = '$path/$imageFileName';
+    final imagePath = '$path/$imageFileName.jpeg';
     try {
       final imageFile = File(imagePath);
       await imageFile.delete();
@@ -45,9 +45,9 @@ class ImageFileController {
 
   // 画像をファイルに保存する。
   // カメラ撮影時のimageファイルを引数に入れる。
-  static Future savaLocalImage(PickedFile image, String imageFilePath) async {
+  static Future savaLocalImage(PickedFile image, String imageFileName) async {
     final path = await localPath;
-    final imagePath = '$path/$imageFilePath.jpeg';
+    final imagePath = '$path/$imageFileName.jpeg';
     File imageFile = File(imagePath);
     // カメラで撮影した画像は撮影時用の一時的フォルダパスに保存されるため、
     // その画像をドキュメントへ保存し直す。

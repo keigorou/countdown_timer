@@ -30,6 +30,14 @@ class TrainingSet {
   TrainingSet copyWith({title, trainingMenu}) {
     return TrainingSet(title: title ?? this.title, trainingMenu: trainingMenu ?? this.trainingMenu);
   }
+
+  int getTotalTime() {
+    int totalTime = 0;
+    for (final menu in trainingMenu) {
+      totalTime += menu.time;
+    }
+    return totalTime;
+  }
 }
 
 class TrainingMenuNotifierProvider extends StateNotifier<List<TrainingSet>> {
@@ -63,7 +71,8 @@ class TrainingMenuNotifierProvider extends StateNotifier<List<TrainingSet>> {
         return trainingSet;
       }
     }
-    return state[0];
+    // RangeError回避のためダミーを作っている
+    return const TrainingSet(title: '', trainingMenu: [TrainingMenu(trainingName: 'a')]);
   }
 
   TrainingSet getMenu(int index) {
